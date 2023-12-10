@@ -13,6 +13,7 @@ drive.mount('/content/drive')
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.optimizers import Adam
+from skimage import io, transform
 import pandas as pd
 import os
 from sklearn.preprocessing import MinMaxScaler
@@ -20,6 +21,8 @@ from sklearn.utils import shuffle
 import numpy as np
 from skimage import io, transform
 from sklearn.metrics import mean_squared_error
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Define paths
 image_folder = "/content/drive/MyDrive/Capstone/data_raw/phenocamdata/NEON.D01.HARV.DP1.00033/"
@@ -39,18 +42,16 @@ all_image_paths = get_all_image_paths(image_folder)
 # Sort the image paths alphabetically
 sorted_image_paths = sorted(all_image_paths)
 
-# Display the first image found
-if all_image_paths:
-    image_path = sorted_image_paths[0]
-    image = plt.imread(image_path)
+# # Display the first image found
+# if all_image_paths:
+#     image_path = sorted_image_paths[0]
+#     image = plt.imread(image_path)
 
-    plt.imshow(image)
-    plt.title(f"Example Image: {image_path}")
-    plt.show()
-else:
-    print("No images found in the specified directory.")
-
-from skimage import io, transform
+#     plt.imshow(image)
+#     plt.title(f"Example Image: {image_path}")
+#     plt.show()
+# else:
+#     print("No images found in the specified directory.")
 
 def preprocess_image(file_path):
     img = io.imread(file_path)
@@ -97,14 +98,11 @@ processed_labels = np.array(processed_labels)
 print("Shape of the processed images array:", images.shape)
 print("Shape of the processed labels array:", processed_labels.shape)
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-im = images[0]
-# Display the image using Matplotlib
-plt.imshow(im)
-plt.axis('off') # Optional: turn off axis labels
-plt.show()
+# im = images[0]
+# # Display the image using Matplotlib
+# plt.imshow(im)
+# plt.axis('off') # Optional: turn off axis labels
+# plt.show()
 
 # Convert images and labels to NumPy arrays
 images = np.array(images)
@@ -117,17 +115,14 @@ labels = scaler.fit_transform(labels)
 # Shuffle the data
 images, labels = shuffle(images, labels, random_state=42)
 
-labels[0]
-
 first_image = images[0]
-
-import numpy as np
-import matplotlib.pyplot as plt
 
 # Display the image using Matplotlib
 plt.imshow(first_image)
 plt.axis('off')  # Optional: turn off axis labels
 plt.show()
+
+"""##GAN Model"""
 
 # Define the GAN model
 latent_dim = 100  # Adjust the size as needed
@@ -159,41 +154,37 @@ discriminator.compile(optimizer=Adam(learning_rate=0.0002), loss='binary_crossen
 # Compile the generator
 generator.compile(optimizer=Adam(learning_rate=0.0002), loss='binary_crossentropy')
 
-"""##Do not Run"""
+# # CHECKING- No need to run
 
-# CHECKING- No need to run
+# generator = models.Sequential([
+#     layers.Input(shape=(latent_dim,)),
+#     layers.Dense(7 * 7 * 256),
+#     layers.Reshape((7, 7, 256)),
+#     layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding='same', activation='relu'),
+#     layers.Conv2DTranspose(64, (4, 4), strides=(2, 2), padding='same', activation='relu'),
+#     layers.Conv2DTranspose(32, (4, 4), strides=(2, 2), padding='same', activation='relu'),
+#     layers.Conv2DTranspose(3, (4, 4), strides=(4, 4), padding='same', activation='sigmoid'),  # Adjust strides here
+#     layers.Reshape((224, 224, 3))  # Reshape to the desired output shape
+# ])
+# # Verify the output shape of the generator
+# dummy_input = tf.random.normal(shape=(1, latent_dim))
+# generator_output = generator(dummy_input)
+# print(generator_output.shape)  # Check if the output shape matches (224, 224, 3)
 
-generator = models.Sequential([
-    layers.Input(shape=(latent_dim,)),
-    layers.Dense(7 * 7 * 256),
-    layers.Reshape((7, 7, 256)),
-    layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding='same', activation='relu'),
-    layers.Conv2DTranspose(64, (4, 4), strides=(2, 2), padding='same', activation='relu'),
-    layers.Conv2DTranspose(32, (4, 4), strides=(2, 2), padding='same', activation='relu'),
-    layers.Conv2DTranspose(3, (4, 4), strides=(4, 4), padding='same', activation='sigmoid'),  # Adjust strides here
-    layers.Reshape((224, 224, 3))  # Reshape to the desired output shape
-])
-# Verify the output shape of the generator
-dummy_input = tf.random.normal(shape=(1, latent_dim))
-generator_output = generator(dummy_input)
-print(generator_output.shape)  # Check if the output shape matches (224, 224, 3)
+# # CHECKING- No need to run
 
-# CHECKING- No need to run
+# from tensorflow.keras import layers, models
 
-from tensorflow.keras import layers, models
+# discriminator = models.Sequential([
+#     layers.Input(shape=(224, 224, 3)),  # Adjust input shape
+#     layers.Conv2D(64, (4, 4), strides=(2, 2), padding='same', activation='relu'),
+#     layers.Conv2D(128, (4, 4), strides=(2, 2), padding='same', activation='relu'),
+#     layers.Flatten(),
+#     layers.Dense(1, activation='sigmoid')
+# ])
 
-discriminator = models.Sequential([
-    layers.Input(shape=(224, 224, 3)),  # Adjust input shape
-    layers.Conv2D(64, (4, 4), strides=(2, 2), padding='same', activation='relu'),
-    layers.Conv2D(128, (4, 4), strides=(2, 2), padding='same', activation='relu'),
-    layers.Flatten(),
-    layers.Dense(1, activation='sigmoid')
-])
-
-# Print the model summary to verify the changes
-discriminator.summary()
-
-"""##GAN model"""
+# # Print the model summary to verify the changes
+# discriminator.summary()
 
 # Combined GAN model
 discriminator.trainable = False
@@ -204,7 +195,7 @@ gan_model = models.Model(gan_input, gan_output)
 gan_model.compile(optimizer=Adam(learning_rate=0.0002, beta_1=0.5), loss='binary_crossentropy')
 
 # Training the GAN
-epochs = 1000  # Adjust as needed
+epochs = 1500  # Adjust as needed
 batch_size = 64  # Adjust as needed
 
 # Disable eager execution
@@ -232,6 +223,91 @@ for epoch in range(epochs):
     # Print progress
     if epoch % 100 == 0:
         print(f"Epoch {epoch}, D Loss: {d_loss}, G Loss: {g_loss}")
+
+"""##New GAN Model with SSIM Index"""
+
+from tensorflow.keras import backend as K
+from skimage.metrics import structural_similarity as ssim
+import numpy as np
+
+# Function to calculate SSIM
+def calculate_ssim(img1, img2):
+    return ssim(img1, img2, multichannel=True)
+
+# Define the GAN model
+latent_dim = 100  # Adjust the size as needed
+
+# Generator model
+generator = models.Sequential([
+    layers.Input(shape=(latent_dim,)),
+    layers.Dense(7 * 7 * 256),
+    layers.Reshape((7, 7, 256)),
+    layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding='same', activation='relu'),
+    layers.Conv2DTranspose(64, (4, 4), strides=(2, 2), padding='same', activation='relu'),
+    layers.Conv2DTranspose(32, (4, 4), strides=(2, 2), padding='same', activation='relu'),
+    layers.Conv2DTranspose(3, (4, 4), strides=(4, 4), padding='same', activation='sigmoid'),  # Adjust strides here
+    layers.Reshape((224, 224, 3))  # Reshape to the desired output shape
+])
+
+# Discriminator model
+discriminator = models.Sequential([
+    layers.Input(shape=(224, 224, 3)),  # Adjust input shape
+    layers.Conv2D(64, (4, 4), strides=(2, 2), padding='same', activation='relu'),
+    layers.Conv2D(128, (4, 4), strides=(2, 2), padding='same', activation='relu'),
+    layers.Flatten(),
+    layers.Dense(1, activation='sigmoid')
+])
+
+# Compile the discriminator
+discriminator.compile(optimizer=Adam(learning_rate=0.0002), loss='binary_crossentropy', metrics=['accuracy'])
+
+# Compile the generator
+generator.compile(optimizer=Adam(learning_rate=0.0002), loss='binary_crossentropy')
+
+# Combined GAN model
+discriminator.trainable = False
+gan_input = layers.Input(shape=(latent_dim,))
+generated_image = generator(gan_input)
+gan_output = discriminator(generated_image)
+gan_model = models.Model(gan_input, gan_output)
+gan_model.compile(optimizer=Adam(learning_rate=0.0002, beta_1=0.5), loss='binary_crossentropy')
+
+# Training loop with SSIM metric
+num_epochs = 1500
+batch_size = 64
+
+for epoch in range(num_epochs):
+    # Generate random noise as input to the generator
+    noise = np.random.normal(0, 1, size=(batch_size, latent_dim))
+
+    # Generate synthetic images
+    generated_images = generator.predict(noise)
+
+    # Sample real images from the training set
+    idx = np.random.randint(0, images.shape[0], batch_size)
+    real_images = images[idx]
+    real_labels = labels[idx]
+
+    # Train the discriminator
+
+    # Train discriminator
+    real_labels = np.ones((batch_size, 1))  # Updated line
+    d_loss_real = discriminator.train_on_batch(real_images, real_labels)
+    d_loss_fake = discriminator.train_on_batch(generated_images, np.zeros((batch_size, 1)))
+    d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+
+    # Train the generator
+    g_loss = gan_model.train_on_batch(noise, np.ones((batch_size, 1)))
+
+    # Calculate SSIM
+    ssim_score = calculate_ssim(real_images[0], generated_images[0])
+
+    # Print progress
+    print(f"Epoch {epoch}/{num_epochs} [D loss: {d_loss[0]} | D accuracy: {100 * d_loss[1]}] [G loss: {g_loss}] [SSIM: {ssim_score}]")
+
+"""##GCC for the Generated Image
+
+"""
 
 import numpy as np
 from skimage import img_as_ubyte, io
@@ -261,7 +337,60 @@ for generated_image, generated_index in zip(new_images, generated_indices):
 # Display the generated indices
 print(f"Generated Indices: {list(generated_indices)}")
 
-import matplotlib.pyplot as plt
+import cv2
+
+# Function to get the green mask at the beginning of the year
+def get_begin_mask(image):
+    img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    img_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(img_hsv, (11, 16, 39), (114, 134, 104))
+    return mask
+
+# Function to get the green mask at mid-year
+def get_mid_mask(image):
+    img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    img_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    #mask = cv2.inRange(img_hsv, (21, 10, 0), (110, 255, 173))
+    #mask = cv2.inRange(img_hsv, (30, 50, 50), (90, 255, 255))
+    mask = cv2.inRange(img_hsv, (0, 0, 0), (255, 255, 255))
+    return mask
+
+# Function to get the situated area mask --ROI
+def get_situated_area(begin_mask, mid_mask):
+    situated_area = cv2.bitwise_xor(begin_mask, mid_mask)
+    return situated_area
+
+# Function to calculate GCC and RCC for the situated area
+def calculate_gcc_rcc(generated_image, situated_area):
+    # Convert the generated image to RGB
+    generated_rgb = cv2.cvtColor(generated_image, cv2.COLOR_BGR2RGB)
+
+    # Apply the situated area mask
+    generated_after_mask = cv2.bitwise_and(generated_rgb, generated_rgb, mask=situated_area)
+
+    # Calculate GCC and RCC
+    red = np.sum(generated_after_mask[:, :, 0])
+    green = np.sum(generated_after_mask[:, :, 1])
+    blue = np.sum(generated_after_mask[:, :, 2])
+
+    # Check if denominators are not zero
+    if green + red + blue == 0:
+        gcc = 0  # Set GCC to 0 if the denominator is zero
+        rcc = 0  # Set RCC to 0 if the denominator is zero
+    else:
+        gcc = green / (green + red + blue)
+        rcc = red / (red + green + blue)
+
+    return gcc, rcc
+
+latent_dim = 100  # Adjust as needed
+
+# Function to generate and return images along with indices
+def generate_images_with_indices(num_images):
+    noise = np.random.normal(0, 1, size=(num_images, latent_dim))
+    generated_images = generator.predict(noise)
+    return generated_images, range(len(generated_images))
+
 
 # Function to display images with their GCC values
 def display_images(actual_image, generated_image, actual_gcc, generated_gcc, index):
@@ -273,114 +402,29 @@ def display_images(actual_image, generated_image, actual_gcc, generated_gcc, ind
 
     # Display generated image
     axes[1].imshow(generated_image)
-    axes[1].set_title(f"Generated Image (Index {index})\nGCC: {generated_gcc[0]:.2f}")
+    axes[1].set_title(f"Predicted Image (Index {index})\nGCC: {generated_gcc:.2f}")
 
     plt.show()
 
 # Example: Display actual and generated images
-index_to_display = 1  # Replace with the index of the image you want to display
+index_to_display = 1  # Replace with the index of the image we want to display
 actual_image = images[index_to_display]
 actual_gcc = labels[index_to_display]
 
+new_images, generated_indices = generate_images_with_indices(2)
+
 # Assuming `new_images` is a list of generated images
 generated_image = new_images[index_to_display]
-generated_gcc = scaler.inverse_transform(generated_image.reshape(1, -1))[0]
+
+situated_area = get_situated_area(get_begin_mask(generated_image), get_mid_mask(generated_image))
+
+# Calculate GCC for the generated image
+generated_gcc, generated_rcc = calculate_gcc_rcc(generated_image, situated_area)
+
 
 display_images(actual_image, generated_image, actual_gcc, generated_gcc, index_to_display)
 
-"""## Exp: Next Day Image"""
-
-import numpy as np
-from skimage import img_as_ubyte, io
-import matplotlib.pyplot as plt
-
-latent_dim = 100  # Adjust as needed
-
-# Function to generate and return images along with indices
-def generate_next_day_image(input_image, num_images=1):
-    # Generate noise for the next day image
-    noise = np.random.normal(0, 1, size=(num_images, latent_dim))
-
-    # Generate the next day's image
-    generated_images = generator.predict([noise])
-
-    return generated_images[0]
-
-# Example: Load an input image for one day
-input_image_path = "/content/drive/MyDrive/Capstone/data_raw/phenocamdata/NEON.D01.HARV.DP1.00033/2017/01/NEON.D01.HARV.DP1.00033_2017_01_02_120006.jpg"
-#input_image = io.imread(input_image_path)
-
-input_image = preprocess_image(input_image_path) # Generate the next day's image
-next_day_image = generate_next_day_image(input_image, num_images=1)
-
-# Convert the image to uint8 format (0-255)
-next_day_image_uint8 = img_as_ubyte(next_day_image)
-# Save the generated image
-io.imsave("/content/drive/MyDrive/Capstone/data_out/next_day_generated_image.jpg", next_day_image_uint8)
-
-# Display the generated image
-plt.imshow(next_day_image_uint8)
-plt.title("Next Day Generated Image")
-plt.show()
-
-import numpy as np
-from skimage import img_as_ubyte, io
-import matplotlib.pyplot as plt
-import os
-
-latent_dim = 100  # Adjust as needed
-
-# Function to generate and return images along with indices
-def generate_next_day_image(input_image, num_images=1):
-    # Generate noise for the next day image
-    noise = np.random.normal(0, 1, size=(num_images, latent_dim))
-    # Generate the next day's image
-    generated_images = generator.predict([noise])
-    return generated_images[0]
-
-# Function to recursively get all image paths in a directory
-def get_all_image_paths(directory):
-    image_paths = []
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if file.lower().endswith(('.png', '.jpg', '.jpeg')):
-                image_paths.append(os.path.join(root, file))
-    return image_paths
-
-# Get all image paths in the base folder
-image_folder =  "/content/drive/MyDrive/Capstone/data_raw/phenocamdata/NEON.D01.HARV.DP1.00033/"
-all_image_paths = get_all_image_paths(image_folder)
-# Sort the image paths alphabetically
-sorted_image_paths = sorted(all_image_paths)
-
-# Choose an index for the input image
-input_image_index = 0  # Change this to the desired index
-
-# Load the input image
-input_image_path = sorted_image_paths[input_image_index]
-input_image = io.imread(input_image_path)
-
-# Generate the next day's image
-next_day_image = generate_next_day_image(input_image, num_images=1)
-
-# Convert the image to uint8 format (0-255)
-next_day_image_uint8 = img_as_ubyte(next_day_image)
-
-# Save the generated image
-output_image_path = "/content/drive/MyDrive/Capstone/data_out/GAN_Images/image_1.jpg"  # Change this to the desired path
-io.imsave(output_image_path, next_day_image_uint8)
-
-# Display the input image
-plt.subplot(1, 2, 1)
-plt.imshow(input_image)
-plt.title("Input Image")
-
-# Display the generated image
-plt.subplot(1, 2, 2)
-plt.imshow(next_day_image_uint8)
-plt.title("Next Day Generated Image")
-
-plt.show()
+"""## Next Day Image - Refinement Required"""
 
 import numpy as np
 from skimage import img_as_ubyte, io
@@ -448,11 +492,11 @@ def display_actual_and_generated_images(actual_image, generated_image):
 
     # Display actual next day image with explicit extent
     axes[0].imshow(actual_image, extent=[0, actual_width, actual_height, 0], aspect='auto')
-    axes[0].set_title("Actual Next Day Image")
+    axes[0].set_title("Actual Next Day Image \nDay 02")
 
     # Display generated next day image with explicit extent
     axes[1].imshow(generated_image_uint8, extent=[0, actual_width, actual_height, 0], aspect='auto')
-    axes[1].set_title("Generated Next Day Image")
+    axes[1].set_title("Predicted Next Day Image \nDay 02")
 
 
     # Show the figure
