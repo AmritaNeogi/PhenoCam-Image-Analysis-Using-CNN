@@ -1,4 +1,4 @@
-# Phenology image anaysis
+#Phenology image anaysis: Visual Feature Stability Modeling
 
 Developed by Linh Ta, Bryan Heidorn, Jessica Guo, and David LeBauer
 
